@@ -1,4 +1,4 @@
-package main
+package handler
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (apiCfg *apiConfig) handleUser(w http.ResponseWriter, r *http.Request) {
+func (apiCfg *ApiConfig) HandleUser(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Name string `json:"name"`
 	}
@@ -19,7 +19,7 @@ func (apiCfg *apiConfig) handleUser(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	err := decoder.Decode(&params)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Sprintf("Error Parsing Json : %v", err))
+		RespondWithError(w, http.StatusBadRequest, fmt.Sprintf("Error Parsing Json : %v", err))
 		return
 	}
 
@@ -31,13 +31,13 @@ func (apiCfg *apiConfig) handleUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error Creating User : %v", err))
+		RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error Creating User : %v", err))
 		return
 	}
 
-	respondWithJson(w, http.StatusCreated, user)
+	RespondWithJson(w, http.StatusCreated, user)
 }
 
-func (apiCfg *apiConfig) handleGetUser(w http.ResponseWriter, r *http.Request, user database.User) {
-	respondWithJson(w, http.StatusOK, user)
+func (apiCfg *ApiConfig) HandleGetUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	RespondWithJson(w, http.StatusOK, user)
 }

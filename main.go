@@ -6,16 +6,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/akshaysangma/rss-aggregator-go/handler"
 	"github.com/akshaysangma/rss-aggregator-go/internal/database"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
-
-type apiConfig struct {
-	DB *database.Queries
-}
 
 func main() {
 	godotenv.Load()
@@ -35,7 +32,7 @@ func main() {
 		log.Fatalf("Cannot connect to database: %v", err)
 	}
 
-	apiCfg := apiConfig{
+	apiCfg := handler.ApiConfig{
 		DB: database.New(conn),
 	}
 
@@ -52,11 +49,18 @@ func main() {
 	}))
 
 	v1Router := chi.NewRouter()
-	v1Router.Get("/readiness", handleReadiness)
-	v1Router.Get("/err", handleErr)
-	v1Router.Post("/user", apiCfg.handleUser)
-	v1Router.Get("/user", apiCfg.middlewareAuth(apiCfg.handleGetUser))
-	v1Router.Post("/feed", apiCfg.middlewareAuth(apiCfg.handleCreateFeed))
+	v1Router.Get("/readiness", handler.HandleReadiness)
+	v1Router.Get("/err", handler.HandleErr)
+
+	v1Router.Post("/user", apiCfg.HandleUser)
+	v1Router.Get("/user", apiCfg.MiddlewareAuth(apiCfg.HandleGetUser))
+
+	v1Router.Post("/feed", apiCfg.MiddlewareAuth(apiCfg.HandleCreateFeed))
+	v1Router.Get("/feeds", apiCfg.HandleGetFeeds)
+
+	v1Router.Post("/feed_follows", apiCfg.MiddlewareAuth(apiCfg.HandleCreateFeedFollows))
+	v1Router.Get("/feed_follows", apiCfg.MiddlewareAuth(apiCfg.HandleGetFeedFollowsByUser))
+	v1Router.Delete("/feed_follows/{feedFollowID}", apiCfg.MiddlewareAuth(apiCfg.HandleDeleteFeedFollows))
 
 	router.Mount("/v1", v1Router)
 
