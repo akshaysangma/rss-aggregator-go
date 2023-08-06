@@ -5,9 +5,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/akshaysangma/rss-aggregator-go/handler"
 	"github.com/akshaysangma/rss-aggregator-go/internal/database"
+	"github.com/akshaysangma/rss-aggregator-go/internal/rss"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
@@ -32,9 +34,12 @@ func main() {
 		log.Fatalf("Cannot connect to database: %v", err)
 	}
 
+	db := database.New(conn)
 	apiCfg := handler.ApiConfig{
-		DB: database.New(conn),
+		DB: db,
 	}
+
+	go rss.StartScrapper(db, 10, 10*time.Second)
 
 	router := chi.NewRouter()
 
@@ -54,6 +59,7 @@ func main() {
 
 	v1Router.Post("/user", apiCfg.HandleUser)
 	v1Router.Get("/user", apiCfg.MiddlewareAuth(apiCfg.HandleGetUser))
+	v1Router.Get("/user/posts", apiCfg.MiddlewareAuth(apiCfg.HandleGetPostForUser))
 
 	v1Router.Post("/feed", apiCfg.MiddlewareAuth(apiCfg.HandleCreateFeed))
 	v1Router.Get("/feeds", apiCfg.HandleGetFeeds)

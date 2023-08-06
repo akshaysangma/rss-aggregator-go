@@ -41,3 +41,16 @@ func (apiCfg *ApiConfig) HandleUser(w http.ResponseWriter, r *http.Request) {
 func (apiCfg *ApiConfig) HandleGetUser(w http.ResponseWriter, r *http.Request, user database.User) {
 	RespondWithJson(w, http.StatusOK, user)
 }
+
+func (apiCfg *ApiConfig) HandleGetPostForUser(w http.ResponseWriter, r *http.Request, user database.User) {
+	posts, err := apiCfg.DB.GetPostsForUser(r.Context(), database.GetPostsForUserParams{
+		UserID: user.ID,
+		Limit:  10,
+	})
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, fmt.Sprintf("Error Getting Posts : %v", err))
+		return
+	}
+
+	RespondWithJson(w, http.StatusOK, posts)
+}
